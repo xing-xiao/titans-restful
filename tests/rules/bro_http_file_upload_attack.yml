@@ -1,0 +1,23 @@
+title: bro_http_file_upload_attack
+level: medium
+stage: exploit
+category: bro_http
+tag: upload
+status: experimental
+description: file upload attack detection
+reference: None
+rules:
+  - query:
+      from: bro-http
+      where:
+          and:
+              - post_body CONTAINS Content-Disposition
+              - or:
+                    - post_body CONTAINS .php
+                    - post_body CONTAINS .asp
+                    - post_body CONTAINS .aspx
+                    - post_body CONTAINS .jsp
+                    - post_body CONTAINS .jspx
+      fields:
+          - '*'
+      as: ALARM

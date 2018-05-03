@@ -6,25 +6,18 @@ from flask_restful import reqparse, abort, Resource
 from flask import jsonify
 from flask import request
 
+from titans_restful.utils import get_jar_ids
+from titans_restful.configs import flink_host, flink_port, kafka_brokers
+
+
+jarids = get_jar_ids(flink_host, flink_port)
+
 abspath = os.path.abspath('.')
-jar_dir = os.path.abspath(os.path.join(abspath, '..', '..', 'jars'))
-rule_dir = os.path.abspath(os.path.join(abspath, '..', '..', 'rules'))
+rule_dir = os.path.abspath(os.path.join(abspath, 'rules'))
+if not os.path.exists(rule_dir):
+    os.makedirs(rule_dir)
 
-
-def get_jar_id():
-    cep_jarid = None
-    with open(os.path.join(jar_dir, "jar.id")) as f:
-        for line in f:
-            rsp = json.loads(line)
-            if 'TsapCEPEngine' in rsp['filename']:
-                cep_jarid = rsp['filename']
-    return cep_jarid
-
-
-cep_jarid = get_jar_id()
-
-
-class APITasks(Resource):
+class Tasks(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('type', type=str, help='Rate to charge for this resource')
@@ -60,7 +53,7 @@ class APITasks(Resource):
         return '', 201
 
 
-class APITaskUpload(Resource):
+class Upload(Resource):
     def put(self):
         file = request.files['file']
         if not file.filename.endswith('yml'):
@@ -80,16 +73,17 @@ class APITaskUpload(Resource):
         return jsonify({'success': 'rule <%s> upload success' % yml['title']})
 
 
-class APITaskRun(Resource):
+class Run(Resource):
     def post(self, name):
+        print(os.path.join(rule_dir, name + '.yml'))
         if not os.path.isfile(os.path.join(rule_dir, name + '.yml')):
             return jsonify({'failed': 'rule <%s> dose not exists' % name})
-        url = "http://jobmanager:8081/jars/%s/run?" \
+        url = "http://%s:%d/jars/%s/run?" \
               "allowNonRestoredState=false" \
               "&entry-class=" \
               "&parallelism=" \
-              "&program-args=--kafka.brokers+kafka:9092+--kafka.input.topics+tsap+--kafka.output.topics+alarm+--rule.path+%s" \
-              "&savepointPath=" % (cep_jarid, os.path.join(rule_dir, name)+'.yml')
+              "&program-args=--kafka.brokers+%s+--kafka.input.topics+tsap+--kafka.output.topics+alarm+--rule.path+%s" \
+              "&savepointPath=" % (flink_host, flink_port, jarids['cep'], kafka_brokers, os.path.join(rule_dir, name+'.yml'))
         data = {}
         requests.post(url=url, data=data)
         return jsonify({'success': 'rule <%s> started' % name})
