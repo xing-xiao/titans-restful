@@ -2,7 +2,7 @@ import os
 import yaml
 import requests
 import json
-from flask.ext.restful import reqparse, abort, Resource
+from flask_restful import reqparse, abort, Resource
 from flask import jsonify
 from flask import request
 
