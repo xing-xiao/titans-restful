@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # test tmp file
-test/rules/*
+tests/rules/*
 
 # pycharm
 .idea/*
