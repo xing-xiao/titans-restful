@@ -19,13 +19,17 @@ class Update(Resource):
                                      cursorclass=pymysql.cursors.DictCursor)
             for i in data:
                 try:
-                    sqlfind = '''SELECT  *  FROM  intelligence WHERE data='%s' ''' % (i)
+                    print(i)
+                    sqlfind = '''SELECT  *  FROM  intelligence WHERE data='%s' ''' % i.split(',')[0]
+                    print(sqlfind)
                     client.cursor().execute(sqlfind)
                     rst = client.cursor().fetchone()
+                    print(rst)
                     if rst is None:
                         # j = [x.strip() for x in i.split(',', 2)]
                         count += 1
                         sqlinsert = '''INSERT INTO intelligence(data, type, ioc) VALUES(%s)''' % i
+                        print(sqlinsert)
                         client.cursor().execute(sqlinsert)
                         client.commit()
                 except Exception as e:
