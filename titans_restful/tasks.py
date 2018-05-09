@@ -1,10 +1,8 @@
 import os
 import yaml
 import requests
-import json
 from flask_restful import reqparse, abort, Resource
-from flask import jsonify
-from flask import request
+from flask import request, jsonify
 
 from titans_restful.utils import get_jar_ids
 from titans_restful.configs import flink_host, flink_port, kafka_brokers
@@ -16,6 +14,7 @@ abspath = os.path.abspath('.')
 rule_dir = os.path.abspath(os.path.join(abspath, 'rules'))
 if not os.path.exists(rule_dir):
     os.makedirs(rule_dir)
+
 
 class Tasks(Resource):
     def __init__(self):
@@ -75,7 +74,6 @@ class Upload(Resource):
 
 class Run(Resource):
     def post(self, name):
-        print(os.path.join(rule_dir, name + '.yml'))
         if not os.path.isfile(os.path.join(rule_dir, name + '.yml')):
             return jsonify({'failed': 'rule <%s> dose not exists' % name})
         url = "http://%s:%d/jars/%s/run?" \
@@ -85,5 +83,5 @@ class Run(Resource):
               "&program-args=--kafka.brokers+%s+--kafka.input.topics+tsap+--kafka.output.topics+alarm+--rule.path+%s" \
               "&savepointPath=" % (flink_host, flink_port, jarids['cep'], kafka_brokers, os.path.join(rule_dir, name+'.yml'))
         data = {}
-        requests.post(url=url, data=data)
-        return jsonify({'success': 'rule <%s> started' % name})
+        rsp = requests.post(url=url, data=data)
+        return jsonify({'success': 'rule <%s> started <%s>' % (name, rsp.text)})
