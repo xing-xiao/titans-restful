@@ -14,3 +14,4 @@ mysql_port = int(config['MYSQL']['port'])
 mysql_user = config['MYSQL']['user']
 mysql_password = config['MYSQL']['password']
 mysql_db_intelligence = config['MYSQL']['db_intelligence']
+mysql_db_tsap = config['MYSQL']['db_tsap']
