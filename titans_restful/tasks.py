@@ -8,8 +8,6 @@ from titans_restful.utils import get_jar_ids
 from titans_restful.configs import flink_host, flink_port, kafka_brokers
 
 
-jarids = get_jar_ids(flink_host, flink_port)
-
 abspath = os.path.abspath('.')
 rule_dir = os.path.abspath(os.path.join(abspath, 'rules'))
 if not os.path.exists(rule_dir):
@@ -73,6 +71,9 @@ class Upload(Resource):
 
 
 class Run(Resource):
+    def __init__(self):
+        self.jarids = get_jar_ids(flink_host, flink_port)
+
     def post(self, name):
         if not os.path.isfile(os.path.join(rule_dir, name + '.yml')):
             return jsonify({'failed': 'rule <%s> dose not exists' % name})
@@ -81,7 +82,7 @@ class Run(Resource):
               "&entry-class=" \
               "&parallelism=" \
               "&program-args=--kafka.brokers+%s+--kafka.input.topics+tsap+--kafka.output.topics+alarm+--rule.path+%s" \
-              "&savepointPath=" % (flink_host, flink_port, jarids['cep'], kafka_brokers, os.path.join(rule_dir, name+'.yml'))
+              "&savepointPath=" % (flink_host, flink_port, self.jarids['cep'], kafka_brokers, os.path.join(rule_dir, name+'.yml'))
         data = {}
         rsp = requests.post(url=url, data=data)
         return jsonify({'success': 'rule <%s> started <%s>' % (name, rsp.text)})
