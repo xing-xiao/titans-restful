@@ -12,15 +12,16 @@ class FaUpload(Resource):
     def put(self):
         file = request.files['file']
         if not file.filename.endswith('yml'):
-            return jsonify({'failed': 'only yml file accepted'})
+            return jsonify({'failed': 'only yml file accepted, you put %s' % file.filename})
         try:
             data = file.read()
             yml = yaml.load(data)
         except Exception as e:
-            return jsonify({'failed': 'only yml file accepted'})
+            return jsonify({'failed': 'yml file format error!'})
         if 'name' not in yml or 'condition' not in yml or 'combination' not in yml or 'action' not in yml:
             return jsonify({'failed': 'format error!'})
-
+        sqlinsert = '''INSERT INTO rule_fa(`name`, `rule`, `date`) VALUES('%s', '%s', '%s')''' % \
+                    (yml['name'], data.decode('ascii'), datetime.datetime.now().isoformat())
         try:
             client = pymysql.connect(host=mysql_host,
                                      port=mysql_port,
@@ -30,11 +31,9 @@ class FaUpload(Resource):
                                      charset='utf8mb4',
                                      cursorclass=pymysql.cursors.DictCursor)
             cursor = client.cursor()
-            sqlinsert = '''INSERT INTO rule_fa(`name`, `rule`, `date`) VALUES('%s', '%s', '%s')''' % \
-                                (data['name'], data, datetime.datetime.now().isoformat)
             cursor.execute(sqlinsert)
             client.commit()
             client.close()
         except Exception as e:
-            return jsonify({'failed': str(e)})
-        return jsonify({'success': 'rule <%s> upload success' % yml['name']})
+            return jsonify({'failed': 'insert sql error:\n\t%s\n\t%s' % (sqlinsert, str(e))})
+        return jsonify({'success': 'fa rule <%s> upload success' % yml['name']})
