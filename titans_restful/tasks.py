@@ -51,6 +51,7 @@ class Tasks(Resource):
 
 
 class Upload(Resource):
+
     def put(self):
         file = request.files['file']
         if not file.filename.endswith('yml'):
@@ -71,12 +72,11 @@ class Upload(Resource):
 
 
 class Run(Resource):
-    def __init__(self):
-        self.jarids = get_jar_ids(flink_host, flink_port)
 
     def post(self, name):
         if not os.path.isfile(os.path.join(rule_dir, name + '.yml')):
             return jsonify({'failed': 'rule <%s> dose not exists' % name})
+        arids = get_jar_ids(flink_host, flink_port)
         url = "http://%s:%d/jars/%s/run?" \
               "allowNonRestoredState=false" \
               "&entry-class=" \
