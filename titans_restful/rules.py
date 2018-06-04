@@ -7,6 +7,7 @@ from flask import request, jsonify
 from titans_restful.configs import mysql_host, mysql_port, mysql_user, mysql_password, mysql_db_tsap
 import pymysql
 
+
 class FaUpload(Resource):
     def put(self):
         file = request.files['file']
@@ -28,14 +29,11 @@ class FaUpload(Resource):
                                      database=mysql_db_tsap,
                                      charset='utf8mb4',
                                      cursorclass=pymysql.cursors.DictCursor)
-            try:
-                cursor = client.cursor()
-                sqlinsert = '''INSERT INTO rule_fa(`name`, `rule`, `date`) VALUES('%s', '%s', '%s')''' % \
-                                    (data['name'], data, datetime.datetime.now().isoformat)
-                cursor.execute(sqlinsert)
-                client.commit()
-            except Exception as e:
-                client.rollback()
+            cursor = client.cursor()
+            sqlinsert = '''INSERT INTO rule_fa(`name`, `rule`, `date`) VALUES('%s', '%s', '%s')''' % \
+                                (data['name'], data, datetime.datetime.now().isoformat)
+            cursor.execute(sqlinsert)
+            client.commit()
             client.close()
         except Exception as e:
             return jsonify({'failed': str(e)})
